@@ -20,7 +20,7 @@ setup(
     name='dagger-python3',
     version='1.3.0',
     author='east301',
-    author_email='me@east301',
+    author_email='me@east301.net',
     packages=['dagger'],
     url='https://github.com/east301/dagger',
     license='GPL',
