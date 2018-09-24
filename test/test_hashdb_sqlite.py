@@ -1,30 +1,31 @@
+import os
+import dagger
+
+
 def fwrite(txt, fn):
     open(fn, 'w').write(txt)
 
 
 def rm(fn):
-    import os
     try:
         os.remove(fn)
-    except:
+    except:     # NOQA
         pass
 
 
 def test_load_missing():
-    import dagger
     d = dagger.hashdb_sqlite()
     d.load()
-    return 1
 
 
 def test_get_missing():
-    import dagger
     d = dagger.hashdb_sqlite()
-    return not d.get('tmp')
+    assert not d.get('tmp')
 
 
-def test_update():
-    import dagger
+def test_update(tmpdir):
+    os.chdir(tmpdir)
+
     f = 'tmp.sqlite'
     rm(f)
 
@@ -34,20 +35,21 @@ def test_update():
     d.load()
     d.update('tmp')
     h1 = d.get('tmp')
-    #print h1
     d.export()
 
     fwrite('stuff', 'tmp')
     d.load()
     d.update('tmp')
     h2 = d.get('tmp')
-    #print h2
 
-    return h1 and h2 and (h1 != h2)
+    assert h1
+    assert h2
+    assert h1 != h2
 
 
-def test_load_memory():
-    import dagger
+def test_load_memory(tmpdir):
+    os.chdir(tmpdir)
+
     f = 'tmp.sqlite'
     rm(f)
 
@@ -62,12 +64,12 @@ def test_load_memory():
     d = dagger.hashdb_sqlite(f, True)
     d.load()
     h = d.get('tmp')
-    #print h
-    return h and len(h[0]) > 10
+    assert h and len(h[0]) > 10
 
 
-def test_export():
-    import dagger
+def test_export(tmpdir):
+    os.chdir(tmpdir)
+
     f1 = 'tmp1'
     f2 = 'tmp2'
     f3 = 'tmp3'
@@ -92,13 +94,13 @@ def test_export():
     h1 = d.get(f1)
     h2 = d.get(f2)
     h3 = d.get(f3)
-    #print h1,h2,h3
 
-    return d.db and h1 and h1 == h2 and h1 != h3
+    assert d.db and h1 and h1 == h2 and h1 != h3
 
 
-def test_export_memory():
-    import dagger
+def test_export_memory(tmpdir):
+    os.chdir(tmpdir)
+
     f1 = 'tmp1'
     f2 = 'tmp2'
     f3 = 'tmp3'
@@ -122,21 +124,5 @@ def test_export_memory():
     h1 = d.get(f1)
     h2 = d.get(f2)
     h3 = d.get(f3)
-    #print h1,h2,h3
 
-    return d.db and h1 and h1 == h2 and h1 != h3
-
-
-#############################################
-tests = [
-    test_load_missing,
-    test_get_missing,
-    test_update,
-    test_export,
-    test_load_memory,
-    test_export_memory,
-]
-
-from tester import test
-import sys
-sys.exit(not test(tests=tests))
+    assert d.db and h1 and h1 == h2 and h1 != h3

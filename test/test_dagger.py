@@ -1,12 +1,17 @@
+import os
+import time
+
+import dagger
+
+
 def delete(files):
-    import os
     if type(files) not in [type([]), type(())]:
         files = [files]
 
     for f in files:
         try:
             os.remove(f)
-        except:
+        except:     # NOQA
             pass
 
 
@@ -20,15 +25,15 @@ def fill(files, text=''):
 
 def touch(names, t=None):
     """Set (future) atime/mtime per file name."""
-    import os, time
     if type(names) not in [type([]), type(())]:
         names = [names]
 
-    if t == None:
+    if t is None:
         t = time.time() + 1
 
     for n in names:
-        if not os.path.exists(n): fill(n)
+        if not os.path.exists(n):
+            fill(n)
         os.utime(n, (t, t))
 
 
@@ -37,7 +42,8 @@ def paths_equal(dag, names, truth):
     for name in names:
         n = dag.get(name)
         if not n.paths:
-            if n.paths != truth[name]: return False
+            if n.paths != truth[name]:
+                return False
         elif dag.pathnames(name) != truth[name]:
             return False
 
@@ -53,7 +59,6 @@ def stale_dict(dag, names):
 
 
 def test_pathnames():
-    import dagger
     d = dagger.dagger()
     d.add('1', ['2', '3'])
     n1 = d.get('1')
@@ -61,13 +66,13 @@ def test_pathnames():
     n3 = d.get('3')
     n1.paths = [[n2, n3]]
     p = d.pathnames('1')
-    #print p
-    return p and p == [['2', '3']]
+    assert p and p == [['2', '3']]
 
 
-def test_run_order():
+def test_run_order(tmpdir):
     """Check graph walk order."""
-    import dagger
+    os.chdir(tmpdir)
+
     all = '1 2 3 4 5 6 7'.split()
     fill(all)
 
@@ -77,13 +82,13 @@ def test_run_order():
     d.add('6', ['3', '7'])
     d.run(allpaths=False)
     names = [n.name for n in d.order.list]
-    #print names
-    return names == '2 4 5 3 1 7 6'.split()
+    assert names == '2 4 5 3 1 7 6'.split()
 
 
-def test_run_paths():
+def test_run_paths(tmpdir):
     """Check graph depth-first path for each node."""
-    import dagger
+    os.chdir(tmpdir)
+
     d = dagger.dagger()
     d.add('1', ['2', '3'])
     d.add('3', ['4', '5'])
@@ -102,15 +107,13 @@ def test_run_paths():
         '6': None,
         '7': [['6']],
     }
-    if not paths_equal(d, all, truth):
-        return False
-
-    return True
+    assert paths_equal(d, all, truth)
 
 
-def test_run_allpaths():
+def test_run_allpaths(tmpdir):
     """Check all graph paths possible."""
-    import dagger
+    os.chdir(tmpdir)
+
     d = dagger.dagger()
     d.add('1', ['2', '3'])
     d.add('3', ['4', '5'])
@@ -130,15 +133,13 @@ def test_run_allpaths():
         '6': None,
         '7': [['6']],
     }
-    if not paths_equal(d, all, truth):
-        return False
-
-    return True
+    assert paths_equal(d, all, truth)
 
 
-def test_force(allpaths=False):
+def test_force(tmpdir, allpaths=False):
     """Check forcing staleness."""
-    import dagger
+    os.chdir(tmpdir)
+
     d = dagger.dagger()
     d.add('1', ['2', '3'])
     d.add('3', ['4', '5'])
@@ -152,9 +153,7 @@ def test_force(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 != truth:
-        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
-        return False
+    assert states1 == truth
 
     touch(all)
     d.resetnodes()
@@ -163,9 +162,7 @@ def test_force(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 1, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states2 = stale_dict(d, all)
-    if states2 != truth:
-        print('states2 =', states2, '<>\ntruth   =', truth, '\n')
-        return False
+    assert states2 == truth
 
     touch(all)
     d.resetnodes()
@@ -174,9 +171,7 @@ def test_force(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 0}
     states3 = stale_dict(d, all)
-    if states3 != truth:
-        print('states3 =', states3, '<>\ntruth   =', truth, '\n')
-        return False
+    assert states3 == truth
 
     touch(all)
     d.resetnodes()
@@ -185,20 +180,17 @@ def test_force(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 1, '6': 1, '7': 0}
     states4 = stale_dict(d, all)
-    if states4 != truth:
-        print('states4 =', states4, '<>\ntruth   =', truth, '\n')
-        return False
-
-    return True
+    assert states4 == truth
 
 
-def test_force_allpaths():
-    return test_force(allpaths=1)
+def test_force_allpaths(tmpdir):
+    test_force(tmpdir, allpaths=True)
 
 
-def test_time(allpaths=False):
+def test_time(tmpdir, allpaths=False):
     """Check stale when file timestamps are old."""
-    import dagger
+    os.chdir(tmpdir)
+
     d = dagger.dagger()
     d.add('1', ['2', '3'])
     d.add('3', ['4', '5'])
@@ -212,9 +204,7 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 != truth:
-        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
-        return False
+    assert states1 == truth
 
     touch(all, 0)
     touch('2')
@@ -223,9 +213,7 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states2 = stale_dict(d, all)
-    if states2 != truth:
-        print('states2 =', states2, '<>\ntruth   =', truth, '\n')
-        return False
+    assert states2 == truth
 
     touch(all, 0)
     touch('3')
@@ -234,9 +222,7 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 0, '4': 0, '5': 0, '6': 1, '7': 0}
     states3 = stale_dict(d, all)
-    if states3 != truth:
-        print('states3 =', states3, '<>\ntruth   =', truth, '\n')
-        return False
+    assert states3 == truth
 
     touch(all, 0)
     touch('4')
@@ -245,9 +231,7 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 0}
     states4 = stale_dict(d, all)
-    if states4 != truth:
-        print('states4 =', states4, '<>\ntruth   =', truth, '\n')
-        return False
+    assert states4 == truth
 
     touch(all, 0)
     touch('5')
@@ -256,9 +240,7 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 0}
     states5 = stale_dict(d, all)
-    if states5 != truth:
-        print('states5 =', states5, '<>\ntruth   =', truth, '\n')
-        return False
+    assert states5 == truth
 
     touch(all, 0)
     touch('6')
@@ -267,9 +249,7 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states6 = stale_dict(d, all)
-    if states6 != truth:
-        print('states6 =', states6, '<>\ntruth   =', truth, '\n')
-        return False
+    assert states6 == truth
 
     touch(all, 0)
     touch('7')
@@ -278,20 +258,17 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 1, '7': 0}
     states7 = stale_dict(d, all)
-    if states7 != truth:
-        print('states7 =', states7, '<>\ntruth   =', truth, '\n')
-        return False
-
-    return True
+    assert states7 == truth
 
 
-def test_time_allpaths():
-    return test_time(allpaths=1)
+def test_time_allpaths(tmpdir):
+    return test_time(tmpdir, allpaths=1)
 
 
-def test_hash_missing():
+def test_hash_missing(tmpdir):
     """Check stale when file hashes missing."""
-    import dagger
+    os.chdir(tmpdir)
+
     d = dagger.dagger('tmp.missing')
     d.hashall = True
     d.add('1', ['2', '3'])
@@ -304,16 +281,13 @@ def test_hash_missing():
     d.run()
     truth = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states = stale_dict(d, all)
-    if states != truth:
-        print(states, '<>\n', truth, '\n')
-        return False
-
-    return 1
+    assert states == truth
 
 
-def test_hash():
+def test_hash(tmpdir):
     """Check stale when file hashes change."""
-    import dagger
+    os.chdir(tmpdir)
+
     all = '1 2 3 4 5 6 7'.split()
     fill(all, '')
 
@@ -333,16 +307,13 @@ def test_hash():
     d.run()
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 1, '6': 1, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 != truth:
-        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
-        return False
-
-    return 1
+    assert states1 == truth
 
 
-def test_dot():
+def test_dot(tmpdir):
     """Test exporting dot graph file."""
-    import dagger
+    os.chdir(tmpdir)
+
     d = dagger.dagger()
     d.add('1', ['2', '3'])
     d.add('3', ['4', '5'])
@@ -357,17 +328,18 @@ def test_dot():
     d.run()
     d.dot(out=f, color=1)
 
-    import os
-    if not os.path.exists(f): return False
+    assert os.path.exists(f)
     text = open(f).read()
-    return ('1 [fillcolor = "#ff' in text) and (
-        '3 [fillcolor = "#ff' in text
-    ) and ('6 [fillcolor = "#ff' in text) and ('5 [fillcolor = white]' in text)
+    assert '1 [fillcolor = "#ff' in text
+    assert '3 [fillcolor = "#ff' in text
+    assert '6 [fillcolor = "#ff' in text
+    assert '5 [fillcolor = white]' in text
 
 
-def test_phony():
+def test_phony(tmpdir):
     """Make a missing file phony and make sure nothing is stale."""
-    import dagger
+    os.chdir(tmpdir)
+
     d = dagger.dagger()
     d.add('1', ['2', '3'])
     d.add('3', ['4', '5'])
@@ -381,16 +353,13 @@ def test_phony():
 
     truth = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 != truth:
-        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
-        return False
-
-    return 1
+    assert states1 == truth
 
 
-def test_phony_force_stale():
+def test_phony_force_stale(tmpdir):
     """Make a missing file phony and force it to stale."""
-    import dagger
+    os.chdir(tmpdir)
+
     d = dagger.dagger()
     d.add('1', ['2', '3'])
     d.add('3', ['4', '5'])
@@ -405,9 +374,7 @@ def test_phony_force_stale():
 
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 != truth:
-        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
-        return False
+    assert states1 == truth
 
     d = dagger.dagger()
     d.add('1', ['2', '3'])
@@ -423,16 +390,13 @@ def test_phony_force_stale():
 
     truth = {'1': 1, '2': 0, '3': 1, '4': 1, '5': 0, '6': 1, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 != truth:
-        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
-        return False
-
-    return 1
+    assert states1 == truth
 
 
-def test_phony_time():
+def test_phony_time(tmpdir):
     """Make a missing file phony and ensure stale by stale child (that had older child)."""
-    import dagger
+    os.chdir(tmpdir)
+
     d = dagger.dagger()
     d.add('1', ['2', '3'])
     d.add('3', ['4', '5'])
@@ -446,16 +410,13 @@ def test_phony_time():
 
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 != truth:
-        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
-        return False
-
-    return 1
+    assert states1 == truth
 
 
-def test_phony_hash():
+def test_phony_hash(tmpdir):
     """Make a missing file phony and ensure stale by stale child (that had old hash)."""
-    import dagger
+    os.chdir(tmpdir)
+
     all = '1 2 3 4 5 6 7'.split()
     fill(all, '')
 
@@ -476,33 +437,4 @@ def test_phony_hash():
 
     truth = {'1': 1, '2': 0, '3': 1, '4': 1, '5': 0, '6': 1, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 != truth:
-        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
-        return False
-
-    return 1
-
-
-#############################################
-tests = [
-    test_pathnames,
-    test_run_order,
-    test_run_paths,
-    test_run_allpaths,
-    test_force,
-    test_force_allpaths,
-    test_time,
-    test_time_allpaths,
-    test_hash_missing,
-    test_hash,
-    test_dot,
-    test_phony,
-    test_phony_force_stale,
-    test_phony_time,
-    test_phony_hash,
-]
-
-from tester import test
-import sys
-if __name__ == '__main__':
-    sys.exit(not test(tests=tests))
+    assert states1 == truth

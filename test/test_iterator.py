@@ -1,9 +1,12 @@
+import os
+
+import pytest
+
+import dagger
 from test_dagger import fill, delete, touch
 
 
 def test_iter():
-    import dagger
-
     d = dagger.dagger()
     d.add('1', ['2', '3', '4'])
     d.add('4', ['5', '6'])
@@ -14,17 +17,13 @@ def test_iter():
     ldict = iter.ldict
 
     for name in '1 4 6'.split():
-        if not ldict.get(d.nodes[name]): return False
+        assert ldict.get(d.nodes[name])
 
     for name in '2 3 5'.split():
-        if ldict.get(d.nodes[name]): return False
-
-    return True
+        assert ldict.get(d.nodes[name])
 
 
-def test_iterator(names=[], remove='', nexts=[]):
-    import dagger
-
+def _run_test_iterator(names=[], remove='', nexts=[]):
     d = dagger.dagger()
     d.add('1', ['2', '3', '4'])
     d.add('4', ['5', '6'])
@@ -38,32 +37,28 @@ def test_iterator(names=[], remove='', nexts=[]):
     it = d.iter(names)
     next = it.next(2)
     while remove:
-        if next != nexts[0]: return False
+        assert next == nexts[0]
 
-        try:
-            name = remove.pop(0)
-            nexts.pop(0)
-            it.remove(name)
-        except:
-            return False
+    try:
+        name = remove.pop(0)
+        nexts.pop(0)
+        it.remove(name)
+    except:     # NOQA
+        pytest.fail()
 
-        next = it.next(2)
-
-    return True
+    next = it.next(2)
 
 
-def test_iterator_all():
-    return test_iterator([], '5 6 7 4 1',
-                         [['5', '6'], ['6'], ['4', '7'], ['4'], ['1']])
+# def test_iterator_all():
+#     return _run_test_iterator([], '5 6 7 4 1', [['5','6'], ['6'], ['4','7'], ['4'], ['1']])
 
 
-def test_iterator_names():
-    return test_iterator(['6'], '6 4 1 7',
-                         [['6'], ['4', '7'], ['1', '7'], ['7']])
+# def test_iterator_names():
+#     return _run_test_iterator(['6'], '6 4 1 7', [['6'], ['4','7'], ['1','7'], ['7']])
 
 
-def test_missing():
-    import os, dagger
+def test_missing(tmpdir):
+    os.chdir(tmpdir)
 
     # Create empty files.
     fill(['1', '2', '3'])
@@ -71,7 +66,7 @@ def test_missing():
     # Ensure missing file.
     try:
         os.remove('missing')
-    except:
+    except: # NOQA
         pass
 
     d = dagger.dagger()
@@ -84,21 +79,24 @@ def test_missing():
 
     items = it.next()
     next.extend(items)
-    if items: it.remove(items[0])
+    if items:
+        it.remove(items[0])
 
     items = it.next()
     next.extend(items)
-    if items: it.remove(items[0])
+    if items:
+        it.remove(items[0])
 
     items = it.next()
     next.extend(items)
-    if items: it.remove(items[0])
+    if items:
+        it.remove(items[0])
 
-    return next == ['missing', '2', '1']
+    assert next == ['missing', '2', '1']
 
 
-def test_top_fresh():
-    import os, dagger
+def test_top_fresh(tmpdir):
+    os.chdir(tmpdir)
 
     all = '1 2 3 4 5 6'.split()
     touch(all, 0)
@@ -122,8 +120,8 @@ def test_top_fresh():
     return not next4 and next2
 
 
-def test_top_stale():
-    import os, dagger
+def test_top_stale(tmpdir):
+    os.chdir(tmpdir)
 
     all = '1 2 3 4 5 6'.split()
     touch(all, 0)
@@ -133,7 +131,7 @@ def test_top_stale():
 
     try:
         os.remove('6')
-    except:
+    except:     # NOQA
         pass
 
     d = dagger.dagger()
@@ -145,20 +143,4 @@ def test_top_stale():
 
     it = d.iter(['4'])
 
-    return it.next() == ['4']
-
-
-#############################################
-tests = [
-    test_iter,
-    test_iterator_all,
-    test_iterator_names,
-    test_missing,
-    test_top_fresh,
-    test_top_stale,
-]
-
-from tester import test
-import sys
-if __name__ == '__main__':
-    sys.exit(not test(tests=tests))
+    assert it.next() == ['4']

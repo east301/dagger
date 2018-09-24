@@ -1,1 +1,1 @@
-from .dagger import dagger, VERSION     # NOQA
+from .dagger import *   # NOQA
