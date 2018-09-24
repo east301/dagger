@@ -13,8 +13,9 @@
 #
 # Copyright 2012 Remik Ziemlinski
 
-import os, datetime
+import datetime
 import hashlib
+import os
 from collections import deque
 
 VERSION = "1.3.0"
@@ -31,7 +32,8 @@ class idict(object):
 
     def append(self, item):
         """Add unique item, store its index and return index."""
-        if item in self.dict: return self.dict[item]
+        if item in self.dict:
+            return self.dict[item]
 
         self.dict[item] = self.ctr
         self.list.append(item)
@@ -43,7 +45,7 @@ class idict(object):
 
     def index(self, item):
         """Return index for item. None if not in container."""
-        return self.dict.get(item, None)
+        return self.dict.get(item)
 
     def __iter__(self):
         return self.list.__iter__()
@@ -58,22 +60,31 @@ class ldict_node(object):
 
     def __init__(self, data):
         self.data = data
-        self.prev, self.next = None, None
+        self.prev = None
+        self.next = None
 
 
 class ldict(object):
-    """Hybrid linked-list/dict container for O(1) removal of append-sorted data keys. Benchmark shows that it is much faster than plain list for large arrays (see bench/bench_ldict.py)."""
+    """
+    Hybrid linked-list/dict container for O(1) removal of append-sorted data keys.
+    Benchmark shows that it is much faster than plain list for large arrays
+    (see bench/bench_ldict.py).
+    """
 
     def __init__(self, lst=[]):
         """Create for existing list."""
-        self.head, self.tail = None, None
+        self.head = None
+        self.tail = None
         self.dict = {}
-        if lst: [self.append(item) for item in lst]
+
+        for item in lst:
+            self.append(item)
 
     def append(self, item):
-        if item in self.dict: return
+        if item in self.dict:
+            return
 
-        if type(item) != ldict_node:
+        if not isinstance(item, ldict_node):
             item = ldict_node(item)
 
         if not self.head:
@@ -88,17 +99,24 @@ class ldict(object):
 
     def get(self, data):
         """Returns ldict_node for data item."""
-        return self.dict.get(data, None)
+        return self.dict.get(data)
 
     def remove(self, item):
-        if type(item) != ldict_node: item = self.get(item)
-        if not item: return
+        if not isinstance(item, ldict_node):
+            item = self.get(item)
+        if not item:
+            return
 
-        if item.data in self.dict: self.dict.pop(item.data)
-        if item.prev: item.prev.next = item.next
-        if item.next: item.next.prev = item.prev
-        if self.tail == item: self.tail = item.prev
-        if self.head == item: self.head = item.next
+        if item.data in self.dict:
+            self.dict.pop(item.data)
+        if item.prev:
+            item.prev.next = item.next
+        if item.next:
+            item.next.prev = item.prev
+        if self.tail == item:
+            self.tail = item.prev
+        if self.head == item:
+            self.head = item.next
 
 
 ###############################################################
@@ -111,24 +129,22 @@ class hashdb(object):
 
     def get(self, fn):
         """Get hash for given filename in db."""
-        return self.db.get(fn, None)
+        return self.db.get(fn)
 
     def export(self):
         """Write out db to text file with file names and hashes."""
         try:
-            f = open(self.filename, 'w')
-            [f.write('%s,%s\n' % (k, self.db[k])) for k in self.db]
-            f.close()
+            with open(self.filename, 'w') as f:
+                for k in self.db:
+                    f.write('%s,%s\n' % (k, self.db[k]))
         except:
             print('Error: failed to write "%s"' % (self.filename))
 
     def load(self, silent=False):
         """Loads db text file."""
         try:
-            f = open(self.filename)
-            lines = f.read().split()
-            self.db = dict([x.split(',') for x in lines])
-            f.close()
+            with open(self.filename) as f:
+                self.db = dict([x.split(',') for x in f.read().split()])
         except:
             if not silent:
                 print('Warning: failed to load "%s"' % (self.filename))
@@ -137,12 +153,10 @@ class hashdb(object):
     def md5(fn):
         """Return md5 checksum for file named 'fn' or None if error."""
         try:
-            fh = open(fn, 'rb')
             m = hashlib.md5()
-            while True:
-                data = fh.read(8192)
-                if not data: break
-                m.update(data)
+            with open(fn, 'rb') as fh:
+                for chunk in iter(lambda: fh.read(8192), b''):
+                    m.update(chunk)
 
             return m.hexdigest()
         except:
@@ -171,10 +185,12 @@ class hashdb_sqlite(hashdb):
 
     def export(self):
         """Write out db to file with file names and hashes."""
+        import binascii
+        import shutil
+
         try:
             if self.memory:
                 # Backup current file in case of write error.
-                import shutil, binascii
                 bak = '%s.%s.bak' % (self.filename,
                                      str(binascii.b2a_hex(os.urandom(3))))
                 bakok = False
@@ -208,21 +224,26 @@ class hashdb_sqlite(hashdb):
                     except:
                         pass
 
-            if self.db: self.db.close()
+            if self.db:
+                self.db.close()
         except:
             print('Error: failed to write "%s"' % (self.filename))
 
     def get(self, fn):
         """Get hash for given filename in db."""
-        if not self.db: return ''
+        if not self.db:
+            return ''
+
         c = self.db.cursor()
         c.execute('SELECT hash FROM db WHERE file=?', (fn, ))
         h = c.fetchone()
-        if h: return h
-        else: return None
+        return h or None
 
     def load(self, silent=False):
-        """Loads sqlite db file if it exists and optionally into memory. If none exists, a new db is created."""
+        """
+        Loads sqlite db file if it exists and optionally into memory.
+        If none exists, a new db is created.
+        """
         import sqlite3
         try:
             # Create schema if file doesn't exist yet.
@@ -251,7 +272,9 @@ class hashdb_sqlite(hashdb):
 
     def set(self, fn, hash):
         """Put hash for file into table."""
-        if not self.db: return
+        if not self.db:
+            return
+
         c = self.db.cursor()
         c.execute("INSERT OR REPLACE INTO db VALUES ('%s','%s')" % (fn, hash))
         self.db.commit()
@@ -267,8 +290,8 @@ def time2strings(t):
 ###############################################################
 class node(object):
     """
-  File node for dependecy graph.
-  """
+    File node for dependecy graph.
+    """
 
     def __init__(self, name):
         self.hash = None
@@ -300,10 +323,13 @@ class node(object):
 
     def build_paths_set(self):
         """Make set of nodes that are in paths lists to allow quick lookups."""
-        if not self.paths: return
+        if not self.paths:
+            return
 
         self.paths_set = set()
-        [[self.paths_set.add(no) for no in path] for path in self.paths]
+        for path in self.paths:
+            for no in path:
+                self.paths_set.add(no)
 
     def dump(self):
         """Return string with basic node info."""
@@ -312,15 +338,15 @@ class node(object):
 
     def format(self, pat=None):
         """
-    @return formatted string. 
-    @param pat: Supported format specifiers:
-    %a: absolute name
-    %d: date
-    %b: base name
-    %r: root name (no directory prefix or extension suffix)
-    %m: modified time
-    None: as-is name
-    """
+        @return formatted string.
+        @param pat: Supported format specifiers:
+        %a: absolute name
+        %d: date
+        %b: base name
+        %r: root name (no directory prefix or extension suffix)
+        %m: modified time
+        None: as-is name
+        """
         if pat:
             if '%a' in pat:
                 a = os.path.abspath(self.name)
@@ -338,8 +364,7 @@ class node(object):
             if '%r' in pat:
                 b = os.path.basename(self.name)
                 idx = b.rfind('.')  # Allow dot files, eg. .bashrc
-                if idx > 0: r = b[:idx]
-                else: r = b
+                r = b[:idx] if (idx > 0) else b
                 pat = pat.replace('%r', r)
 
             return pat
@@ -356,23 +381,27 @@ class node(object):
         """Get modified time for file from system and optionally compute hash."""
         self.reset()
 
-        if self.phony: return
+        if self.phony:
+            return
 
         exists = os.path.exists(self.name)
         # Missing file is considered stale (we need to make it).
-        if not exists: self.stale = 1
+        if not exists:
+            self.stale = 1
 
         if time and exists:
             self.time = os.path.getmtime(self.name)
 
-        if hash: self.hash = hashdb.md5(self.name)
+        if hash:
+            self.hash = hashdb.md5(self.name)
 
 
 ###########################################################
 class iterator(object):
     """
-  Iterate over dagger results and get groups of items mutually exclusive in dependency graph. Use for guiding serial or parallel processing.
-  """
+    Iterate over dagger results and get groups of items mutually exclusive in dependency graph.
+    Use for guiding serial or parallel processing.
+    """
 
     def __init__(self, dag, items):
         self.dag = dag
@@ -383,33 +412,40 @@ class iterator(object):
             self.ldict = ldict(items)
 
         # Setup quick path lookups.
-        [no.build_paths_set() for no in self.ldict.dict]
+        for no in self.ldict.dict:
+            no.build_paths_set()
 
     def next(self, n=1):
         """Get next n independent item names. n=1 by default."""
         cur = self.ldict.head
-        if not cur: return []
+        if not cur:
+            return []
 
         result = [cur.data]
         cur = cur.next
 
         # Check if cur is not in path of any prev to allow parallel updates.
-        while len(result) < n and cur:
+        while (len(result) < n) and cur:
             independent = all([cur.data not in no.paths_set for no in result])
-            if independent: result.append(cur.data)
+            if independent:
+                result.append(cur.data)
+
             cur = cur.next
 
         return [no.name for no in result]
 
     def remove(self, item):
         """Remove item from candidate list."""
-        if type(item) == node:
+        if isinstance(item, node):
             self.ldict.remove(item)
         else:
             self.ldict.remove(self.dag.nodes[item])
 
     def __len__(self):
-        """Returns number of all items currently available in iterator ('remove' reduces this value)."""
+        """
+        Returns number of all items currently available in iterator
+        ('remove' reduces this value).
+        """
         return len(self.ldict.dict)
 
 
@@ -419,10 +455,10 @@ class dagger(object):
 
     def __init__(self, hashfile='', sqlite=False, sqlite_memory=1):
         """
-    Check if nodes are stale based on modified time or hash log (each line has file,hash).
-    
-    hashfile: filename for hash log file.
-    """
+        Check if nodes are stale based on modified time or hash log (each line has file,hash).
+
+        hashfile: filename for hash log file.
+        """
         # Loaded hash db.
         self.db = None
         # Which files to force as stale or uptodate.
@@ -453,11 +489,11 @@ class dagger(object):
 
     def dot(self, out=None, format=None, color=True):
         """
-    Return dot graph as string and optionally write to file 'out'.
-    Stale nodes will be colored red.
-    
-    You can set the file name 'format' for node labels.
-    """
+        Return dot graph as string and optionally write to file 'out'.
+        Stale nodes will be colored red.
+
+        You can set the file name 'format' for node labels.
+        """
         red = '"#ff8888"'
         s = 'digraph dagger {\nbgcolor = white;\n'
 
@@ -465,37 +501,38 @@ class dagger(object):
         for p in list(self.nodes.values()):
             pformat = p.format(format)
             atts = []
-            if color and p.stale: atts.append("fillcolor = %s" % (red))
-            else: atts.append("fillcolor = white")
+            if color and p.stale:
+                atts.append("fillcolor = %s" % (red))
+            else:
+                atts.append("fillcolor = white")
 
-            if atts: s += '%s [%s]\n' % (pformat, ','.join(atts))
+            if atts:
+                s += '%s [%s]\n' % (pformat, ','.join(atts))
 
             for c in p.nodes:
                 cformat = c.format(format)
                 atts = []
-                if color and c.stale: atts.append("fillcolor = %s" % (red))
-                else: atts.append("fillcolor = white")
+                if color and c.stale:
+                    atts.append("fillcolor = %s" % (red))
+                else:
+                    atts.append("fillcolor = white")
 
-                if atts: s += '%s [%s]\n' % (cformat, ','.join(atts))
+                if atts:
+                    s += '%s [%s]\n' % (cformat, ','.join(atts))
 
                 s += '%s -> %s;\n' % (pformat, cformat)
 
         s += '}'
 
         if out:
-            f = open(out, 'w')
-            f.write(s)
-            f.close()
+            with open(out, 'w') as f:
+                f.write(s)
 
         return s
 
     def dump(self):
         """Text dump of nodes."""
-        out = ''
-        for n in list(self.nodes.values()):
-            out += n.dump() + '\n'
-
-        return out
+        return '\n'.join([n.dump() for n in self.nodes.values()])
 
     def exporthash(self):
         """Write hashdb for all nodes."""
@@ -504,8 +541,10 @@ class dagger(object):
 
         for k in self.nodes:
             f = self.nodes[k]
-            if f.hash: db.set(k, f.hash)
-            else: db.update(k)
+            if f.hash:
+                db.set(k, f.hash)
+            else:
+                db.update(k)
 
         db.export()
 
@@ -517,15 +556,20 @@ class dagger(object):
         return self.nodes[name]
 
     def iter(self, names=[]):
-        """Return iterator for all stale nodes listed by name (and their dependents). If [] is given, then all stale nodes (and their dependents) will be returned."""
-        if names == None: return []
+        """
+        Return iterator for all stale nodes listed by name (and their dependents).
+        If [] is given, then all stale nodes (and their dependents) will be returned.
+        """
+        if names is None:
+            return []
 
-        if names == []:  # User wants all stale.
+        if not names:   # User wants all stale.
             stalenames = [no.name for no in self.order.list if no.stale]
         else:
             stalenames = [name for name in names if self.nodes[name].stale]
 
-        # Need to preserve dag run order to reduce path checking during iterator.next to guarantee mutual independence, so sort queries by their dag search order indices.
+        # Need to preserve dag run order to reduce path checking during iterator.next
+        # to guarantee mutual independence, so sort queries by their dag search order indices.
         sort = [(self.order.index(self.nodes[k]), self.nodes[k])
                 for k in stalenames]
         sort.sort()
@@ -536,8 +580,13 @@ class dagger(object):
 
         # Also add dependents (all nodes in path to a root node).
         # They are stale if a child node was stale.
-        [[[allrequests.append(pno) for pno in path] for path in no.paths]
-         for no in requests if no.paths]
+        for no in requests:
+            if not no.paths:
+                continue
+
+            for path in no.paths:
+                for pno in path:
+                    allrequests.append(pno)
 
         return iterator(self, allrequests)
 
@@ -548,16 +597,22 @@ class dagger(object):
     def pathnames(self, name):
         """Return list of lists where paths use names instead of object references."""
         no = self.nodes[name]
-        if not no.paths: return no.paths
+        if not no.paths:
+            return no.paths
+
         return [[pno.name for pno in path] for path in no.paths]
 
     def phony(self, name):
-        """Set node with name to be phony, so even when file with name is missing, it won't be considered stale, unless it has a stale child."""
+        """
+        Set node with name to be phony, so even when file with name is missing,
+        it won't be considered stale, unless it has a stale child.
+        """
         self.phonys.add(name)
 
     def resetnodes(self):
         """Reset all nodes."""
-        [n.reset() for n in list(self.nodes.values())]
+        for n in self.nodes.values():
+            n.reset()
 
     def stale(self, name, force=1):
         """Force node with name to be stale (force=1) or uptodate (force=0)."""
@@ -582,14 +637,14 @@ class dagger(object):
 
     def run(self, allpaths=True):
         """
-    Find stale nodes based on modtime or hash.
-    
-    allpaths: If true, also find all paths from roots to leaf nodes.
-    """
+        Find stale nodes based on modtime or hash.
+
+        allpaths: If true, also find all paths from roots to leaf nodes.
+        """
+
         if (not self.db) and self.hashfile:
             if self.sqlite:
-                self.db = hashdb_sqlite(
-                    self.hashfile, memory=self.sqlite_memory)
+                self.db = hashdb_sqlite(self.hashfile, memory=self.sqlite_memory)
             else:
                 self.db = hashdb(self.hashfile)
 
@@ -610,17 +665,18 @@ class dagger(object):
         ordered = set()
 
         # Get only roots.
-        roots = [f for f in list(self.nodes.values()) if f.paths == None]
+        roots = [f for f in self.nodes.values() if f.paths is None]
         # Clear previous paths.
-        for f in list(self.nodes.values()):
-            if f.paths: f.paths = []
+        for f in self.nodes.values():
+            if f.paths:
+                f.paths = []
 
         visit = {}  # Children lists are copied and popped to find all paths.
         for root in roots:
             # deque pops are faster than list, and we want paths ordered
             # left to right.
             q = deque([root])
-            if allpaths or root not in visit:
+            if allpaths or (root not in visit):
                 visit[root] = deque(root.nodes)
 
             while q:
@@ -634,17 +690,18 @@ class dagger(object):
                     # Done visiting all children.
                     # Determine staleness only once.
                     # Redundant visits are only for building all paths.
-                    if top.stale == None:
+                    if top.stale is None:
                         if top.name in self.forced:
                             top.stale = self.forced[top.name]
                         else:
-                            usehash = self.hashall or self.useshash.get(
-                                top.name, 0)
+                            usehash = self.hashall or self.useshash.get(top.name, 0)
                             if usehash and self.db:
                                 dbhash = self.db.get(top.name)
                             else:
                                 dbhash = None
-                            # If db doesn't have hash for file because it wasn't hashed before, then its not stale yet.
+
+                            # If db doesn't have hash for file because it wasn't hashed before,
+                            # then its not stale yet.
                             if dbhash and (dbhash != top.hash):
                                 top.stale = 1
                             else:
@@ -662,7 +719,7 @@ class dagger(object):
                                         ]))
 
                     q.popleft()
-                    if top.paths != None:  # If not root node.
+                    if top.paths is not None:   # If not root node.
                         # Store this depth-first-search path. One per parent.
                         path = list(q)  # Deep copy.
                         top.paths.append(path)
