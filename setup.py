@@ -19,10 +19,10 @@ from distutils.core import setup
 setup(
     name='dagger-python3',
     version='1.3.0',
-    author='Remik Ziemlinski',
-    author_email='first.surname@gmail',
+    author='east301',
+    author_email='me@east301',
     packages=['dagger'],
-    url='http://pythondagger.sourceforge.net/',
+    url='https://github.com/east301/dagger',
     license='GPL',
     description='File dependency graph evaluator.',
     classifiers=[
