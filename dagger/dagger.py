@@ -73,7 +73,7 @@ class ldict(object):
     def append(self, item):
         if item in self.dict: return
 
-        if type(item) <> ldict_node:
+        if type(item) != ldict_node:
             item = ldict_node(item)
 
         if not self.head:
@@ -91,7 +91,7 @@ class ldict(object):
         return self.dict.get(data, None)
 
     def remove(self, item):
-        if type(item) <> ldict_node: item = self.get(item)
+        if type(item) != ldict_node: item = self.get(item)
         if not item: return
 
         if item.data in self.dict: self.dict.pop(item.data)
@@ -120,7 +120,7 @@ class hashdb(object):
             [f.write('%s,%s\n' % (k, self.db[k])) for k in self.db]
             f.close()
         except:
-            print 'Error: failed to write "%s"' % (self.filename)
+            print('Error: failed to write "%s"' % (self.filename))
 
     def load(self, silent=False):
         """Loads db text file."""
@@ -131,7 +131,7 @@ class hashdb(object):
             f.close()
         except:
             if not silent:
-                print 'Warning: failed to load "%s"' % (self.filename)
+                print('Warning: failed to load "%s"' % (self.filename))
 
     @staticmethod
     def md5(fn):
@@ -198,8 +198,8 @@ class hashdb_sqlite(hashdb):
                     self.db = mem2file(self.filename)
                     exportok = True
                 except:
-                    print 'Error: Converting in-memory hash db to file "%s" failed. Will try exporting to "hashdump.sqlite". Backup of original hash db was made to "%s".' % (
-                        self.filename, bak)
+                    print('Error: Converting in-memory hash db to file "%s" failed. Will try exporting to "hashdump.sqlite". Backup of original hash db was made to "%s".' % (
+                        self.filename, bak))
                     self.db = mem2file("hashdump.sqlite")
 
                 if exportok and bakok:
@@ -210,7 +210,7 @@ class hashdb_sqlite(hashdb):
 
             if self.db: self.db.close()
         except:
-            print 'Error: failed to write "%s"' % (self.filename)
+            print('Error: failed to write "%s"' % (self.filename))
 
     def get(self, fn):
         """Get hash for given filename in db."""
@@ -247,7 +247,7 @@ class hashdb_sqlite(hashdb):
                 self.db.commit()
         except:
             if not silent:
-                print 'Warning: failed to connect to "%s"' % (self.filename)
+                print('Warning: failed to connect to "%s"' % (self.filename))
 
     def set(self, fn, hash):
         """Put hash for file into table."""
@@ -462,7 +462,7 @@ class dagger(object):
         s = 'digraph dagger {\nbgcolor = white;\n'
 
         # Just create parent->child lines.
-        for p in self.nodes.values():
+        for p in list(self.nodes.values()):
             pformat = p.format(format)
             atts = []
             if color and p.stale: atts.append("fillcolor = %s" % (red))
@@ -492,7 +492,7 @@ class dagger(object):
     def dump(self):
         """Text dump of nodes."""
         out = ''
-        for n in self.nodes.values():
+        for n in list(self.nodes.values()):
             out += n.dump() + '\n'
 
         return out
@@ -557,7 +557,7 @@ class dagger(object):
 
     def resetnodes(self):
         """Reset all nodes."""
-        [n.reset() for n in self.nodes.values()]
+        [n.reset() for n in list(self.nodes.values())]
 
     def stale(self, name, force=1):
         """Force node with name to be stale (force=1) or uptodate (force=0)."""
@@ -610,9 +610,9 @@ class dagger(object):
         ordered = set()
 
         # Get only roots.
-        roots = [f for f in self.nodes.values() if f.paths == None]
+        roots = [f for f in list(self.nodes.values()) if f.paths == None]
         # Clear previous paths.
-        for f in self.nodes.values():
+        for f in list(self.nodes.values()):
             if f.paths: f.paths = []
 
         visit = {}  # Children lists are copied and popped to find all paths.
@@ -645,7 +645,7 @@ class dagger(object):
                             else:
                                 dbhash = None
                             # If db doesn't have hash for file because it wasn't hashed before, then its not stale yet.
-                            if dbhash and (dbhash <> top.hash):
+                            if dbhash and (dbhash != top.hash):
                                 top.stale = 1
                             else:
                                 if (top.name in self.phonys) or usehash:
@@ -662,7 +662,7 @@ class dagger(object):
                                         ]))
 
                     q.popleft()
-                    if top.paths <> None:  # If not root node.
+                    if top.paths != None:  # If not root node.
                         # Store this depth-first-search path. One per parent.
                         path = list(q)  # Deep copy.
                         top.paths.append(path)

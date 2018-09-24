@@ -45,7 +45,7 @@ def test_export():
     lut = dict([x.split(',') for x in open('tmp.db').readlines()])
 
     return lut and len(lut['tmp1']) > 1 and lut['tmp1'] == lut[
-        'tmp2'] and lut['tmp1'] <> lut['tmp3']
+        'tmp2'] and lut['tmp1'] != lut['tmp3']
 
 
 def test_load():
@@ -53,7 +53,7 @@ def test_load():
     d = dagger.hashdb('tmp.db')
     d.load()
     return d.db and len(d.db['tmp1']) > 1 and d.db['tmp1'] == d.db[
-        'tmp2'] and d.db['tmp1'] <> d.db['tmp3']
+        'tmp2'] and d.db['tmp1'] != d.db['tmp3']
 
 
 #############################################

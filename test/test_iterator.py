@@ -38,7 +38,7 @@ def test_iterator(names=[], remove='', nexts=[]):
     it = d.iter(names)
     next = it.next(2)
     while remove:
-        if next <> nexts[0]: return False
+        if next != nexts[0]: return False
 
         try:
             name = remove.pop(0)

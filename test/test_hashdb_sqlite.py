@@ -43,7 +43,7 @@ def test_update():
     h2 = d.get('tmp')
     #print h2
 
-    return h1 and h2 and (h1 <> h2)
+    return h1 and h2 and (h1 != h2)
 
 
 def test_load_memory():
@@ -94,7 +94,7 @@ def test_export():
     h3 = d.get(f3)
     #print h1,h2,h3
 
-    return d.db and h1 and h1 == h2 and h1 <> h3
+    return d.db and h1 and h1 == h2 and h1 != h3
 
 
 def test_export_memory():
@@ -124,7 +124,7 @@ def test_export_memory():
     h3 = d.get(f3)
     #print h1,h2,h3
 
-    return d.db and h1 and h1 == h2 and h1 <> h3
+    return d.db and h1 and h1 == h2 and h1 != h3
 
 
 #############################################

@@ -37,8 +37,8 @@ def paths_equal(dag, names, truth):
     for name in names:
         n = dag.get(name)
         if not n.paths:
-            if n.paths <> truth[name]: return False
-        elif dag.pathnames(name) <> truth[name]:
+            if n.paths != truth[name]: return False
+        elif dag.pathnames(name) != truth[name]:
             return False
 
     return True
@@ -152,8 +152,8 @@ def test_force(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 <> truth:
-        print 'states1 =', states1, '<>\ntruth   =', truth, '\n'
+    if states1 != truth:
+        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
         return False
 
     touch(all)
@@ -163,8 +163,8 @@ def test_force(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 1, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states2 = stale_dict(d, all)
-    if states2 <> truth:
-        print 'states2 =', states2, '<>\ntruth   =', truth, '\n'
+    if states2 != truth:
+        print('states2 =', states2, '<>\ntruth   =', truth, '\n')
         return False
 
     touch(all)
@@ -174,8 +174,8 @@ def test_force(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 0}
     states3 = stale_dict(d, all)
-    if states3 <> truth:
-        print 'states3 =', states3, '<>\ntruth   =', truth, '\n'
+    if states3 != truth:
+        print('states3 =', states3, '<>\ntruth   =', truth, '\n')
         return False
 
     touch(all)
@@ -185,8 +185,8 @@ def test_force(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 1, '6': 1, '7': 0}
     states4 = stale_dict(d, all)
-    if states4 <> truth:
-        print 'states4 =', states4, '<>\ntruth   =', truth, '\n'
+    if states4 != truth:
+        print('states4 =', states4, '<>\ntruth   =', truth, '\n')
         return False
 
     return True
@@ -212,8 +212,8 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 <> truth:
-        print 'states1 =', states1, '<>\ntruth   =', truth, '\n'
+    if states1 != truth:
+        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
         return False
 
     touch(all, 0)
@@ -223,8 +223,8 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states2 = stale_dict(d, all)
-    if states2 <> truth:
-        print 'states2 =', states2, '<>\ntruth   =', truth, '\n'
+    if states2 != truth:
+        print('states2 =', states2, '<>\ntruth   =', truth, '\n')
         return False
 
     touch(all, 0)
@@ -234,8 +234,8 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 0, '4': 0, '5': 0, '6': 1, '7': 0}
     states3 = stale_dict(d, all)
-    if states3 <> truth:
-        print 'states3 =', states3, '<>\ntruth   =', truth, '\n'
+    if states3 != truth:
+        print('states3 =', states3, '<>\ntruth   =', truth, '\n')
         return False
 
     touch(all, 0)
@@ -245,8 +245,8 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 0}
     states4 = stale_dict(d, all)
-    if states4 <> truth:
-        print 'states4 =', states4, '<>\ntruth   =', truth, '\n'
+    if states4 != truth:
+        print('states4 =', states4, '<>\ntruth   =', truth, '\n')
         return False
 
     touch(all, 0)
@@ -256,8 +256,8 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 0}
     states5 = stale_dict(d, all)
-    if states5 <> truth:
-        print 'states5 =', states5, '<>\ntruth   =', truth, '\n'
+    if states5 != truth:
+        print('states5 =', states5, '<>\ntruth   =', truth, '\n')
         return False
 
     touch(all, 0)
@@ -267,8 +267,8 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states6 = stale_dict(d, all)
-    if states6 <> truth:
-        print 'states6 =', states6, '<>\ntruth   =', truth, '\n'
+    if states6 != truth:
+        print('states6 =', states6, '<>\ntruth   =', truth, '\n')
         return False
 
     touch(all, 0)
@@ -278,8 +278,8 @@ def test_time(allpaths=False):
     d.run(allpaths=allpaths)
     truth = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 1, '7': 0}
     states7 = stale_dict(d, all)
-    if states7 <> truth:
-        print 'states7 =', states7, '<>\ntruth   =', truth, '\n'
+    if states7 != truth:
+        print('states7 =', states7, '<>\ntruth   =', truth, '\n')
         return False
 
     return True
@@ -304,8 +304,8 @@ def test_hash_missing():
     d.run()
     truth = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states = stale_dict(d, all)
-    if states <> truth:
-        print states, '<>\n', truth, '\n'
+    if states != truth:
+        print(states, '<>\n', truth, '\n')
         return False
 
     return 1
@@ -333,8 +333,8 @@ def test_hash():
     d.run()
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 1, '6': 1, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 <> truth:
-        print 'states1 =', states1, '<>\ntruth   =', truth, '\n'
+    if states1 != truth:
+        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
         return False
 
     return 1
@@ -381,8 +381,8 @@ def test_phony():
 
     truth = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 <> truth:
-        print 'states1 =', states1, '<>\ntruth   =', truth, '\n'
+    if states1 != truth:
+        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
         return False
 
     return 1
@@ -405,8 +405,8 @@ def test_phony_force_stale():
 
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 <> truth:
-        print 'states1 =', states1, '<>\ntruth   =', truth, '\n'
+    if states1 != truth:
+        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
         return False
 
     d = dagger.dagger()
@@ -423,8 +423,8 @@ def test_phony_force_stale():
 
     truth = {'1': 1, '2': 0, '3': 1, '4': 1, '5': 0, '6': 1, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 <> truth:
-        print 'states1 =', states1, '<>\ntruth   =', truth, '\n'
+    if states1 != truth:
+        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
         return False
 
     return 1
@@ -446,8 +446,8 @@ def test_phony_time():
 
     truth = {'1': 1, '2': 0, '3': 1, '4': 0, '5': 0, '6': 1, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 <> truth:
-        print 'states1 =', states1, '<>\ntruth   =', truth, '\n'
+    if states1 != truth:
+        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
         return False
 
     return 1
@@ -476,8 +476,8 @@ def test_phony_hash():
 
     truth = {'1': 1, '2': 0, '3': 1, '4': 1, '5': 0, '6': 1, '7': 0}
     states1 = stale_dict(d, all)
-    if states1 <> truth:
-        print 'states1 =', states1, '<>\ntruth   =', truth, '\n'
+    if states1 != truth:
+        print('states1 =', states1, '<>\ntruth   =', truth, '\n')
         return False
 
     return 1

@@ -1,1 +1,1 @@
-from dagger import dagger, VERSION
+from .dagger import dagger, VERSION

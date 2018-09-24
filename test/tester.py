@@ -12,12 +12,12 @@ def test(path='../dagger', tests=[]):
     ctr = 1
     for t in tests:
         if t():
-            print 'PASS:',
+            print('PASS:', end=' ')
             npass += 1
         else:
-            print 'FAIL:',
-        print '%d. %s' % (ctr, t.__name__)
+            print('FAIL:', end=' ')
+        print('%d. %s' % (ctr, t.__name__))
         ctr += 1
 
-    print '%d of %d passed\n' % (npass, n)
+    print('%d of %d passed\n' % (npass, n))
     return n == npass
