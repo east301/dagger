@@ -14,7 +14,7 @@
 # Copyright 2012 Remik Ziemlinski
 # Copyright 2018 east301
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='dagger-python3',
