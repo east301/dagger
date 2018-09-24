@@ -697,17 +697,9 @@ class dagger(object):
                                 top.stale = 1
                             else:
                                 if (top.name in self.phonys) or usehash:
-                                    top.stale = int(
-                                        any([
-                                            child.stale for child in top.nodes
-                                        ]))
+                                    top.stale = int(any(child.stale for child in top.nodes))
                                 else:  # Also compare with children time.
-                                    top.stale = int(
-                                        any([
-                                            child.stale
-                                            or (top.time < child.time)
-                                            for child in top.nodes
-                                        ]))
+                                    top.stale = int(any(child.stale or (top.time < child.time) for child in top.nodes))
 
                     q.popleft()
                     if top.paths is not None:   # If not root node.
