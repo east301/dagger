@@ -9,8 +9,10 @@ pytest-pythonpath = "*"
 
 [dev-packages]
 pytest = "*"
-yapf = "*"
 pytest-coverage = "*"
+yapf = "*"
+twine = "*"
+wheel = "*"
 
 [requires]
 python_version = "3.6"
