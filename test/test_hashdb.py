@@ -1,63 +1,78 @@
+# Dagger is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Dagger is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Dagger.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Copyright 2012 Remik Ziemlinski
+# Copyright 2018 east301
+
+import os
+
+import dagger
+
+
 def test_md5_missing():
-  import os,dagger
-  return dagger.hashdb.md5('tmp.missing') == None
+    assert dagger.hashdb.md5('tmp.missing') is None
 
-def test_md5():
-  import os,dagger
-  os.system('touch tmp')
-  return dagger.hashdb.md5('tmp')
-  
+
+def test_md5(tmpdir):
+    os.chdir(tmpdir)
+    os.system('touch tmp')
+    assert dagger.hashdb.md5('tmp')
+
+
 def test_load_missing():
-  import os,dagger
-  d = dagger.hashdb()
-  d.load(silent=True)
-  return 1
-  
+    d = dagger.hashdb()
+    d.load()
+
+
 def test_get_missing():
-  import os,dagger
-  d = dagger.hashdb()
-  return not d.get('tmp')
+    d = dagger.hashdb()
+    assert not d.get('tmp')
 
-def test_update():
-  import os,dagger
-  os.system('touch tmp')
-  d = dagger.hashdb()
-  d.update('tmp')
-  return d.get('tmp')
 
-def test_export():
-  import os,dagger
-  os.system('echo 1 > tmp1')
-  os.system('echo 1 > tmp2')
-  os.system('echo 2 > tmp3')
-  d = dagger.hashdb('tmp.db')
-  d.update('tmp1')
-  d.update('tmp2')
-  d.update('tmp3')
-  d.export()
-  del d
-  
-  lut = dict([x.split(',') for x in open('tmp.db').readlines()])
-  
-  return lut and len(lut['tmp1']) > 1 and lut['tmp1'] == lut['tmp2'] and lut['tmp1'] <> lut['tmp3']
+def test_update(tmpdir):
+    os.chdir(tmpdir)
+    os.system('touch tmp')
+    d = dagger.hashdb()
+    d.update('tmp')
+    assert d.get('tmp')
 
-def test_load():
-  import os,dagger
-  d = dagger.hashdb('tmp.db')
-  d.load()
-  return d.db and len(d.db['tmp1']) > 1 and d.db['tmp1'] == d.db['tmp2'] and d.db['tmp1'] <> d.db['tmp3']
 
-#############################################
-tests = [
-test_md5_missing,
-test_md5,
-test_load_missing,
-test_get_missing,
-test_update,
-test_export,
-test_load,
-]
+def test_export(tmpdir):
+    os.chdir(tmpdir)
+    os.system('echo 1 > tmp1')
+    os.system('echo 1 > tmp2')
+    os.system('echo 2 > tmp3')
+    d = dagger.hashdb('tmp.db')
+    d.update('tmp1')
+    d.update('tmp2')
+    d.update('tmp3')
+    d.export()
+    del d
 
-from tester import test
-import sys
-sys.exit( not test(tests=tests) )
+    lut = dict([x.split(',') for x in open('tmp.db').readlines()])
+
+    assert lut
+    assert len(lut['tmp1']) > 1
+    assert lut['tmp1'] == lut['tmp2']
+    assert lut['tmp1'] != lut['tmp3']
+
+
+def test_load(tmpdir):
+    test_export(tmpdir)
+
+    d = dagger.hashdb('tmp.db')
+    d.load()
+    assert d.db
+    assert len(d.db['tmp1']) > 1
+    assert d.db['tmp1'] == d.db['tmp2']
+    assert d.db['tmp1'] != d.db['tmp3']
