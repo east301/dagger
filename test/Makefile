@@ -8,4 +8,4 @@ test:
 	@echo SUCCESS. All tests passed.
 
 clean:
-	-rm -f ? tmp* *.tmp *.pyc .* *.sqlite *~
+	-rm -f tmp* .tmp *.pyc *.sqlite 1 2 3 4 5 7
