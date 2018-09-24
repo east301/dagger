@@ -17,7 +17,7 @@
 from distutils.core import setup
 
 setup(
-    name='dagger',
+    name='dagger-python3',
     version='1.3.0',
     author='Remik Ziemlinski',
     author_email='first.surname@gmail',
@@ -25,13 +25,13 @@ setup(
     url='http://pythondagger.sourceforge.net/',
     license='GPL',
     description='File dependency graph evaluator.',
-    classifiers="""
-Development Status :: 5 - Production/Stable,
-Intended Audience :: Developers,
-License :: OSI Approved :: GNU General Public License (GPL),
-Natural Language :: English,
-Operating System :: OS Independent,
-Programming Language :: Python,
-Topic :: Software Development :: Build Tools
-""".replace('\n','').split(',')
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Topic :: Software Development :: Build Tools'
+    ]
 )
