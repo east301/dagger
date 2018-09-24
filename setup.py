@@ -21,7 +21,7 @@ setup(
     version='1.3.0',
     author='Remik Ziemlinski',
     author_email='first.surname@gmail',
-    packages=['dagger',],
+    packages=['dagger'],
     url='http://pythondagger.sourceforge.net/',
     license='GPL',
     description='File dependency graph evaluator.',

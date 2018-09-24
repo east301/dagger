@@ -208,7 +208,7 @@ class hashdb_sqlite(hashdb):
             try:
                 self.db = mem2file(self.filename)
                 exportok = True
-            except:
+            except:     # NOQA
                 print(
                     f'Error: Converting in-memory hash db to file "{self.filename}" failed. '
                     f'Will try exporting to "hashdump.sqlite". '
