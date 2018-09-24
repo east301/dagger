@@ -12,6 +12,7 @@
 # along with Dagger.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Copyright 2012 Remik Ziemlinski
+# Copyright 2018 east301
 
 import datetime
 import hashlib
