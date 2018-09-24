@@ -133,21 +133,14 @@ class hashdb(object):
 
     def export(self):
         """Write out db to text file with file names and hashes."""
-        try:
-            with open(self.filename, 'w') as f:
-                for k in self.db:
-                    f.write('%s,%s\n' % (k, self.db[k]))
-        except:
-            print('Error: failed to write "%s"' % (self.filename))
+        with open(self.filename, 'w') as f:
+            for k in self.db:
+                f.write('%s,%s\n' % (k, self.db[k]))
 
     def load(self, silent=False):
         """Loads db text file."""
-        try:
-            with open(self.filename) as f:
-                self.db = dict([x.split(',') for x in f.read().split()])
-        except:
-            if not silent:
-                print('Warning: failed to load "%s"' % (self.filename))
+        with open(self.filename) as f:
+            self.db = dict([x.split(',') for x in f.read().split()])
 
     @staticmethod
     def md5(fn):
@@ -159,7 +152,8 @@ class hashdb(object):
                     m.update(chunk)
 
             return m.hexdigest()
-        except:
+
+        except FileNotFoundError:
             return None
 
     def set(self, fn, hash):
@@ -188,46 +182,43 @@ class hashdb_sqlite(hashdb):
         import binascii
         import shutil
 
-        try:
-            if self.memory:
-                # Backup current file in case of write error.
-                bak = '%s.%s.bak' % (self.filename,
-                                     str(binascii.b2a_hex(os.urandom(3))))
-                bakok = False
+        if self.memory:
+            # Backup current file in case of write error.
+            bak = '%s.%s.bak' % (self.filename,
+                                    str(binascii.b2a_hex(os.urandom(3))))
+            bakok = False
+            try:
+                shutil.copyfile(self.filename, bak)
+                bakok = True
+            except IOError:
+                pass
+
+            def mem2file(outputfn):
+                import sqlite3
+                new_db = sqlite3.connect(outputfn)
+                old_db = self.db
+                sql = "".join(line for line in old_db.iterdump())
+                new_db.executescript(sql)
+                old_db.close()
+                return new_db
+
+            exportok = False
+            try:
+                self.db = mem2file(self.filename)
+                exportok = True
+            except:
+                print('Error: Converting in-memory hash db to file "%s" failed. Will try exporting to "hashdump.sqlite". Backup of original hash db was made to "%s".' % (
+                    self.filename, bak))
+                self.db = mem2file("hashdump.sqlite")
+
+            if exportok and bakok:
                 try:
-                    shutil.copyfile(self.filename, bak)
-                    bakok = True
-                except:
+                    os.remove(bak)
+                except IOError:
                     pass
 
-                def mem2file(outputfn):
-                    import sqlite3
-                    new_db = sqlite3.connect(outputfn)
-                    old_db = self.db
-                    sql = "".join(line for line in old_db.iterdump())
-                    new_db.executescript(sql)
-                    old_db.close()
-                    return new_db
-
-                exportok = False
-                try:
-                    self.db = mem2file(self.filename)
-                    exportok = True
-                except:
-                    print('Error: Converting in-memory hash db to file "%s" failed. Will try exporting to "hashdump.sqlite". Backup of original hash db was made to "%s".' % (
-                        self.filename, bak))
-                    self.db = mem2file("hashdump.sqlite")
-
-                if exportok and bakok:
-                    try:
-                        os.remove(bak)
-                    except:
-                        pass
-
-            if self.db:
-                self.db.close()
-        except:
-            print('Error: failed to write "%s"' % (self.filename))
+        if self.db:
+            self.db.close()
 
     def get(self, fn):
         """Get hash for given filename in db."""
@@ -239,36 +230,33 @@ class hashdb_sqlite(hashdb):
         h = c.fetchone()
         return h or None
 
-    def load(self, silent=False):
+    def load(self):
         """
         Loads sqlite db file if it exists and optionally into memory.
         If none exists, a new db is created.
         """
         import sqlite3
-        try:
-            # Create schema if file doesn't exist yet.
-            exists = os.path.exists(self.filename)
 
-            if self.memory:  # Load into memory.
-                self.db = sqlite3.connect(':memory:')
-                if exists:
-                    old_db = sqlite3.connect(self.filename)
-                    sql = "".join(line for line in old_db.iterdump())
-                    # Dump old database in the new one.
-                    self.db.executescript(sql)
-                    old_db.close()
-            else:
-                self.db = sqlite3.connect(self.filename)
+        # Create schema if file doesn't exist yet.
+        exists = os.path.exists(self.filename)
 
-            if not exists:
-                c = self.db.cursor()
-                c.execute(
-                    "CREATE TABLE db (file text, hash text, PRIMARY KEY (file))"
-                )
-                self.db.commit()
-        except:
-            if not silent:
-                print('Warning: failed to connect to "%s"' % (self.filename))
+        if self.memory:  # Load into memory.
+            self.db = sqlite3.connect(':memory:')
+            if exists:
+                old_db = sqlite3.connect(self.filename)
+                sql = "".join(line for line in old_db.iterdump())
+                # Dump old database in the new one.
+                self.db.executescript(sql)
+                old_db.close()
+        else:
+            self.db = sqlite3.connect(self.filename)
+
+        if not exists:
+            c = self.db.cursor()
+            c.execute(
+                "CREATE TABLE db (file text, hash text, PRIMARY KEY (file))"
+            )
+            self.db.commit()
 
     def set(self, fn, hash):
         """Put hash for file into table."""
