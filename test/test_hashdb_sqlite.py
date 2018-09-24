@@ -13,7 +13,7 @@ def rm(fn):
 def test_load_missing():
     import dagger
     d = dagger.hashdb_sqlite()
-    d.load(silent=True)
+    d.load()
     return 1
 
 

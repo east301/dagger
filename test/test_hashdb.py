@@ -12,7 +12,7 @@ def test_md5():
 def test_load_missing():
     import os, dagger
     d = dagger.hashdb()
-    d.load(silent=True)
+    d.load()
     return 1
 
 

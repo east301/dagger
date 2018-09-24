@@ -135,12 +135,15 @@ class hashdb(object):
         """Write out db to text file with file names and hashes."""
         with open(self.filename, 'w') as f:
             for k in self.db:
-                f.write('%s,%s\n' % (k, self.db[k]))
+                f.write(f'{k},{self.db[k]}\n')
 
-    def load(self, silent=False):
+    def load(self):
         """Loads db text file."""
-        with open(self.filename) as f:
-            self.db = dict([x.split(',') for x in f.read().split()])
+        try:
+            with open(self.filename) as f:
+                self.db = dict([x.split(',') for x in f.read().split()])
+        except FileNotFoundError:
+            pass
 
     @staticmethod
     def md5(fn):
@@ -184,14 +187,12 @@ class hashdb_sqlite(hashdb):
 
         if self.memory:
             # Backup current file in case of write error.
-            bak = '%s.%s.bak' % (self.filename,
-                                    str(binascii.b2a_hex(os.urandom(3))))
-            bakok = False
+            bak = f'{self.filename}.{binascii.b2a_hex(os.urandom(3))}.bak'
             try:
                 shutil.copyfile(self.filename, bak)
                 bakok = True
             except IOError:
-                pass
+                bakok = False
 
             def mem2file(outputfn):
                 import sqlite3
@@ -207,8 +208,11 @@ class hashdb_sqlite(hashdb):
                 self.db = mem2file(self.filename)
                 exportok = True
             except:
-                print('Error: Converting in-memory hash db to file "%s" failed. Will try exporting to "hashdump.sqlite". Backup of original hash db was made to "%s".' % (
-                    self.filename, bak))
+                print(
+                    f'Error: Converting in-memory hash db to file "{self.filename}" failed. '
+                    f'Will try exporting to "hashdump.sqlite". '
+                    f'Backup of original hash db was made to "{bak}".'
+                )
                 self.db = mem2file("hashdump.sqlite")
 
             if exportok and bakok:
@@ -264,7 +268,7 @@ class hashdb_sqlite(hashdb):
             return
 
         c = self.db.cursor()
-        c.execute("INSERT OR REPLACE INTO db VALUES ('%s','%s')" % (fn, hash))
+        c.execute("INSERT OR REPLACE INTO db VALUES (?, ?)", (fn, hash))
         self.db.commit()
 
 
@@ -321,8 +325,7 @@ class node(object):
 
     def dump(self):
         """Return string with basic node info."""
-        return '%s: stale=%s, time=%s, hash=%s' % (self.name, str(
-            self.stale), str(self.time), str(self.hash))
+        return f'{self.name}: stale={self.stale}, time={self.tile}, hash={self.hash}'
 
     def format(self, pat=None):
         """
