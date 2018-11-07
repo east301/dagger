@@ -18,7 +18,7 @@ from setuptools import setup
 
 setup(
     name='dagger-python3',
-    version='1.3.0',
+    version='1.3.1',
     author='east301',
     author_email='me@east301.net',
     packages=['dagger'],
