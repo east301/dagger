@@ -286,7 +286,7 @@ class node(object):
     File node for dependecy graph.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, exists_func=None, getmtime_func=None):
         self.hash = None
         self.name = name
         # Children. Deque allows O(1) popleft.
@@ -306,6 +306,9 @@ class node(object):
         self.stale = None
         # Missing files will always by older relative to real files.
         self.time = 0
+        #
+        self.exists_func = exists_func or os.path.exists
+        self.getmtime_func = getmtime_func or os.path.getmtime
 
     def add(self, *nodes):
         """Add one or more nodes as children."""
@@ -376,13 +379,13 @@ class node(object):
         if self.phony:
             return
 
-        exists = os.path.exists(self.name)
+        exists = self.exists_func(self.name)
         # Missing file is considered stale (we need to make it).
         if not exists:
             self.stale = 1
 
         if time and exists:
-            self.time = os.path.getmtime(self.name)
+            self.time = self.getmtime_func(self.name)
 
         if hash:
             self.hash = hashdb.md5(self.name)
@@ -445,7 +448,7 @@ class iterator(object):
 class dagger(object):
     """Evaluates file dependencies in pure python."""
 
-    def __init__(self, hashfile='', sqlite=False, sqlite_memory=1):
+    def __init__(self, hashfile='', sqlite=False, sqlite_memory=1, exists_func=None, getmtime_func=None):
         """
         Check if nodes are stale based on modified time or hash log (each line has file,hash).
 
@@ -470,6 +473,9 @@ class dagger(object):
         # Use SQLite database instead of text file.
         self.sqlite = sqlite
         self.sqlite_memory = sqlite_memory
+        # 
+        self.exists_func = exists_func
+        self.getmtime_func = getmtime_func
 
     def add(self, target, sources=[]):
         """Make target depend on optional sources."""
@@ -543,7 +549,7 @@ class dagger(object):
     def get(self, name):
         """Get node by name."""
         if name not in self.nodes:
-            self.nodes[name] = node(name)
+            self.nodes[name] = node(name, exists_func=self.exists_func, getmtime_func=self.getmtime_func)
 
         return self.nodes[name]
 
